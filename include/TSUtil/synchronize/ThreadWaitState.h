@@ -9,7 +9,7 @@ namespace TSUtil
     {
         ThreadWaitState(time_t deadlineMilliSec);
 
-        // ÀÏºÎ lost wakeup ¹ß»ıÇÒ ¼ö ÀÖÀ½
+        // ì¼ë¶€ lost wakeup ë°œìƒí•  ìˆ˜ ìˆìŒ
         void notify();
         void wait();
 
