@@ -43,6 +43,17 @@ namespace TSUtil
         }
     }
 
+    bool ThreadPool::isRun() const
+    {
+        if (cancellation_.stop_requested() == true)
+            return false;
+
+        if (lstThread_.empty() == true)
+            return false;
+
+        return true;
+    }
+
     const size_t* ThreadPool::findThreadIndex(const std::thread::id& id) const
     {
         auto findIter = mapThreadIndex_.find(id);

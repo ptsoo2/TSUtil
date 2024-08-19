@@ -21,7 +21,7 @@ namespace TSUtil
         void start(size_t size, fnRun_t&& fnRun);
         void stop();
 
-        [[nodiscard]] bool isRun() const { return (cancellation_.stop_requested() == false); }
+        [[nodiscard]] bool isRun() const;
 
         [[nodiscard]] const size_t* findThreadIndex(const std::thread::id& id) const;
         [[nodiscard]] size_t currentThreadIndex() const;
