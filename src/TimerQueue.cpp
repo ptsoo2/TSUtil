@@ -36,20 +36,7 @@ namespace TSUtil
 
     timerKey_t TimerQueue::addTimer(time_t milliSec, fnTask_t&& fnTask)
     {
-        const timerKey_t newTimerKey = _genTimerKey();
-
-        {
-            context_t context;
-            context.type_ = REQUEST_TYPE::ADD;
-            context.key_ = newTimerKey;
-            context.fnTask_ = std::move(fnTask);
-            context.deadline_ = (clock_t::now() + std::chrono::milliseconds(milliSec));
-
-            quePendingRequest_.emplace(std::move(context));
-        }
-
-        waitState_->notify();
-        return newTimerKey;
+        return addTimer(std::chrono::milliseconds{ milliSec }, std::forward<fnTask_t>(fnTask));
     }
 
     void TimerQueue::removeTimer(timerKey_t key)
@@ -80,7 +67,7 @@ namespace TSUtil
 
     size_t TimerQueue::_runDeadline()
     {
-        const auto now = clock_t::now();
+        const clock_t::time_point now = _getNowTime();
         size_t remainCount = timerOption_.maxOnceThroughput_;
         size_t runCount = 0;
 

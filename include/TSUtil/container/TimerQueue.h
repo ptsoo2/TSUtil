@@ -9,6 +9,7 @@
 
 #include "TSUtil/synchronize/ThreadWaitState.h"
 #include "TSUtil/container/MPSCQueue.h"
+#include "TSUtil/constraint/chrono.h"
 
 using timerKey_t = uint64_t;
 
@@ -79,7 +80,10 @@ namespace TSUtil
         void start(TimerQueueOption&& timerOption);
         void stop();
 
+        template <constraint_duration TDuration>
+        [[nodiscard]] timerKey_t addTimer(const TDuration& duration, fnTask_t&& fnTask);
         [[nodiscard]] timerKey_t addTimer(time_t milliSec, fnTask_t&& fnTask);
+
         void removeTimer(timerKey_t key);
 
     protected:
@@ -90,6 +94,7 @@ namespace TSUtil
         void _addTimer(context_t&& context);
         void _removeTimer(context_t&& context);
 
+        [[nodiscard]] clock_t::time_point _getNowTime() const { return clock_t::now(); }
         [[nodiscard]] timerKey_t _genTimerKey() { return timerKeyGenerator_.fetch_add(1); }
 
     protected:
@@ -106,4 +111,26 @@ namespace TSUtil
 
         std::atomic_uint64_t timerKeyGenerator_ = 0;
     };
+}
+
+namespace TSUtil
+{
+    template <constraint_duration TDuration>
+    inline timerKey_t TimerQueue::addTimer(const TDuration& duration, fnTask_t&& fnTask)
+    {
+        const timerKey_t newTimerKey = _genTimerKey();
+
+        {
+            context_t context;
+            context.type_ = REQUEST_TYPE::ADD;
+            context.key_ = newTimerKey;
+            context.fnTask_ = std::forward<fnTask_t>(fnTask);
+            context.deadline_ = (_getNowTime() + duration);
+
+            quePendingRequest_.emplace(std::move(context));
+        }
+
+        waitState_->notify();
+        return newTimerKey;
+    }
 }

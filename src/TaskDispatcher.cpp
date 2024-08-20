@@ -14,8 +14,7 @@ namespace TSUtil
 {
     TaskDispatcher::Runnable::Runnable(time_t deadlineMilliSec)
         : waitState_(deadlineMilliSec)
-    {
-    }
+    {}
 
     void TaskDispatcher::Runnable::post(fnTask_t&& task)
     {
