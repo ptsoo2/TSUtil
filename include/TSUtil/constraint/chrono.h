@@ -5,7 +5,7 @@
 namespace TSUtil
 {
     /// <summary>
-    /// std::duration<> 인자 제약 조건
+    /// std::chrono::duration<> 인자 제약 조건
     /// </summary>
     template <typename T>
     concept constraint_duration = requires(T t)
