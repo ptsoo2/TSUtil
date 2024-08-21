@@ -15,8 +15,8 @@ namespace TSUtil::detail
         using type = std::function<TRet(TArgs...)>;
     };
 
-    template<typename TCallable>
-    using std_function_t = typename detail::std_function_trait<TCallable>::type;
+    template<typename TCallable, typename ...TArgs>
+    using std_function_t = typename detail::std_function_trait<TCallable, TArgs...>::type;
 }
 
 namespace TSUtil
@@ -58,9 +58,9 @@ namespace TSUtil
     /// <summary>
     /// std::function 함수인지
     /// </summary>
-    template<typename TCallable>
+    template<typename TCallable, typename ...TArgs>
     concept constraint_is_std_function = std::is_same_v<
-        detail::std_function_t<TCallable>,
+        detail::std_function_t<TCallable, TArgs...>,
         TCallable
     >;
 
@@ -86,7 +86,7 @@ namespace TSUtil
     template<typename TCallable, typename ...TArgs>
     concept constraint_is_lambda =
         (std::invocable<TCallable, TArgs...> == true)
-        && (constraint_is_std_function<TCallable> == false)
+        && (constraint_is_std_function<TCallable, TArgs...> == false)
         && (constraint_is_global_function<TCallable> == false)
         && (constraint_is_member_function<TCallable> == false)
         ;
