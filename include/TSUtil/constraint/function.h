@@ -6,16 +6,16 @@
 
 namespace TSUtil::detail
 {
-    template<typename TRet, typename ...TArgs>
+    template <typename TRet, typename ...TArgs>
     struct std_function_trait {};
 
-    template<typename TRet, typename ...TArgs>
+    template <typename TRet, typename ...TArgs>
     struct std_function_trait<std::function<TRet(TArgs...)>>
     {
         using type = std::function<TRet(TArgs...)>;
     };
 
-    template<typename TCallable, typename ...TArgs>
+    template <typename TCallable, typename ...TArgs>
     using std_function_t = typename detail::std_function_trait<TCallable, TArgs...>::type;
 }
 
@@ -58,7 +58,7 @@ namespace TSUtil
     /// <summary>
     /// std::function 함수인지
     /// </summary>
-    template<typename TCallable, typename ...TArgs>
+    template <typename TCallable, typename ...TArgs>
     concept constraint_is_std_function = std::is_same_v<
         detail::std_function_t<TCallable, TArgs...>,
         TCallable
@@ -67,7 +67,7 @@ namespace TSUtil
     /// <summary>
     /// 전역 함수 포인터인지
     /// </summary>
-    template<typename TCallable>
+    template <typename TCallable>
     concept constraint_is_global_function =
         (std::is_function_v<TCallable> == true)
         ;
@@ -75,7 +75,7 @@ namespace TSUtil
     /// <summary>
     /// 멤버 함수 포인터인지
     /// </summary>
-    template<typename TCallable>
+    template <typename TCallable>
     concept constraint_is_member_function =
         (std::is_member_function_pointer_v<TCallable> == true)
         ;
@@ -83,7 +83,7 @@ namespace TSUtil
     /// <summary>
     /// 람다인지
     /// </summary>
-    template<typename TCallable, typename ...TArgs>
+    template <typename TCallable, typename ...TArgs>
     concept constraint_is_lambda =
         (std::invocable<TCallable, TArgs...> == true)
         && (constraint_is_std_function<TCallable, TArgs...> == false)
@@ -96,7 +96,7 @@ namespace TSUtil
     /// ptsoo todo - 람다의 구현체는 functor 이므로 캡처하면 그 대상은 구조체 멤버로써 존재하게 된다.
     /// 따라서 size 로 체크할 수 있지만 이게 정석적인 방법인지에는 의문이 있는 상태
     /// </summary>
-    template<typename TCallable, typename ...TArgs>
+    template <typename TCallable, typename ...TArgs>
     concept constraint_has_lambda_capture =
         (constraint_is_lambda<TCallable, TArgs...> == true)
         && (sizeof(decltype([]() {})) != sizeof(TCallable))

@@ -7,7 +7,7 @@ namespace TSUtil
 {
     struct ThreadWaitState
     {
-        ThreadWaitState(time_t deadlineMilliSec);
+        explicit ThreadWaitState(time_t deadlineMilliSec);
 
         // 일부 lost wakeup 발생할 수 있음
         void notify();

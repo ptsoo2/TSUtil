@@ -85,7 +85,7 @@ namespace TSUtil
             runnable.flush();
     }
 
-    void TaskDispatcher::post(size_t tid, fnTask_t&& task)
+    void TaskDispatcher::dispatch(size_t tid, fnTask_t&& task)
     {
         if (threadPool_.isRun() == false)
             throw std::runtime_error("Not running");
@@ -100,13 +100,13 @@ namespace TSUtil
         runnable.post(std::forward<fnTask_t>(task));
     }
 
-    void TaskDispatcher::post(fnTask_t&& task)
+    void TaskDispatcher::dispatch(fnTask_t&& task)
     {
         // round robin 으로 runnable 을 선택해서 post
-        post(_gentid(), std::forward<fnTask_t>(task));
+        dispatch(genThreadId(), std::forward<fnTask_t>(task));
     }
 
-    size_t TaskDispatcher::_gentid()
+    size_t TaskDispatcher::genThreadId()
     {
         // round robin
         size_t tid = postKeyGenerator_.fetch_add(1);
