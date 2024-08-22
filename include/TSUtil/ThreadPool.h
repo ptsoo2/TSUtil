@@ -5,6 +5,7 @@
 #include <map>
 #include <functional>
 #include <stdexcept>
+#include <latch>
 
 namespace TSUtil
 {

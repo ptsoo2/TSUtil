@@ -15,11 +15,14 @@ namespace TSUtil
 
         lstThread_.reserve(size);
 
+        std::latch bootOnceLatch{ static_cast<uint32_t>(size) };
         for (size_t idx = 0; idx < size; ++idx)
         {
             auto fnInit =
-                [idx, stopToken = cancellation_.get_token(), fnRun]()
+                [&bootOnceLatch, idx, stopToken = cancellation_.get_token(), fnRun]()
                 {
+                    bootOnceLatch.count_down();
+
                     while (stopToken.stop_requested() == false)
                         fnRun(idx);
                 };
@@ -27,6 +30,10 @@ namespace TSUtil
             std::thread& thread = lstThread_.emplace_back(std::move(fnInit));
             mapThreadIndex_.emplace(thread.get_id(), idx);
         }
+
+        // 전체 풀이 확보되기 이전에 먼저 사용되지 않도록 
+        // 스레드 실행이 최소 1번씩 된 것을 확인하고 빠져나간다.
+        bootOnceLatch.wait();
     }
 
     void ThreadPool::stop()
