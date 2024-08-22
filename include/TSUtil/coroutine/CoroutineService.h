@@ -37,7 +37,11 @@ namespace TSUtil::coro
         [[nodiscard]] auto defaultDispatcher() { return &defaultDispatcher_; }
         [[nodiscard]] auto timerQueue() { return &timerQueue_; }
 
-        CoroutineService& configureTimerQueue(TimerQueueOption option) { timerQueueOption_ = std::move(option); return *this; }
+        [[nodiscard]] auto& configureTimerQueue(TimerQueueOption option)
+        {
+            timerQueueOption_ = std::move(option);
+            return *this;
+        }
 
     protected:
         TimerQueueOption timerQueueOption_;

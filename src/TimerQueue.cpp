@@ -36,9 +36,13 @@ namespace TSUtil
         thread_->join();
     }
 
-    timerKey_t TimerQueue::addTimer(time_t milliSec, fnTask_t&& fnTask)
+    timerKey_t TimerQueue::addTimer(time_t milliSec, fnTask_t&& fnTask, TimerQueueOption::fnHookExecute_t&& fnOverrideHookExecute /*= nullptr*/)
     {
-        return addTimer(std::chrono::milliseconds{ milliSec }, std::forward<fnTask_t>(fnTask));
+        return addTimer(
+            std::chrono::milliseconds{ milliSec },
+            std::forward<fnTask_t>(fnTask),
+            std::forward<TimerQueueOption::fnHookExecute_t>(fnOverrideHookExecute)
+        );
     }
 
     void TimerQueue::removeTimer(timerKey_t key)

@@ -38,7 +38,23 @@ namespace TSUtil::coro
         std::suspend_never final_suspend() noexcept { return {}; }
 
         void return_void() {}
-        void unhandled_exception() {}
+        void unhandled_exception()
+        {
+            // ptsoo todo - 코루틴은 try~catch 내에서 실행되므로 여기서 캐치해서 바깥으로 전파해야한다.
+            // 일단은 관측을 위해 로깅
+            try
+            {
+                std::rethrow_exception(std::current_exception());
+            }
+            catch (const std::exception& e)
+            {
+                PROBE("unhandled_exception: %s", e.what());
+            }
+            catch (...)
+            {
+                PROBE("unhandled_exception: unknown exception");
+            }
+        }
 
     protected:
         /// <summary>

@@ -51,9 +51,11 @@ namespace TSUtil
     /// </summary>
     class TimerQueue
     {
+    public:
         using fnTask_t = std::function<void()>;
         using clock_t = std::chrono::steady_clock;
 
+    protected:
         enum class REQUEST_TYPE
         {
             ADD,
@@ -81,8 +83,8 @@ namespace TSUtil
         void stop();
 
         template <constraint_duration TDuration>
-        [[nodiscard]] timerKey_t addTimer(const TDuration& duration, fnTask_t&& fnTask);
-        [[nodiscard]] timerKey_t addTimer(time_t milliSec, fnTask_t&& fnTask);
+        [[nodiscard]] timerKey_t addTimer(const TDuration& duration, fnTask_t&& fnTask, TimerQueueOption::fnHookExecute_t&& fnOverrideHookExecute = nullptr);
+        [[nodiscard]] timerKey_t addTimer(time_t milliSec, fnTask_t&& fnTask, TimerQueueOption::fnHookExecute_t&& fnOverrideHookExecute = nullptr);
 
         void removeTimer(timerKey_t key);
 
@@ -117,9 +119,13 @@ namespace TSUtil
 namespace TSUtil
 {
     template <constraint_duration TDuration>
-    inline timerKey_t TimerQueue::addTimer(const TDuration& duration, fnTask_t&& fnTask)
+    inline timerKey_t TimerQueue::addTimer(const TDuration& duration, fnTask_t&& fnTask, TimerQueueOption::fnHookExecute_t&& fnOverrideHookExecute /*= nullptr*/)
     {
         const timerKey_t newTimerKey = _genTimerKey();
+
+        auto hookExecute = (fnOverrideHookExecute == nullptr)
+            ? timerOption_.fnHookExecute_   // 의도적인 복사
+            : std::move(fnOverrideHookExecute);
 
         auto wrappedTask =
             [timerThreadId = threadId_, fnTask = std::forward<fnTask_t>(fnTask)]()
@@ -137,9 +143,9 @@ namespace TSUtil
             context.key_ = newTimerKey;
             context.deadline_ = (_getNowTime() + duration);
             context.fnTask_ =
-                [fnHookExecute = timerOption_.fnHookExecute_, wrappedTask = std::move(wrappedTask)]()
+                [hookExecute = std::move(hookExecute), wrappedTask = std::move(wrappedTask)]()
                 {
-                    fnHookExecute(std::move(wrappedTask));
+                    hookExecute(std::move(wrappedTask));
                 };
 
             quePendingRequest_.emplace(std::move(context));
