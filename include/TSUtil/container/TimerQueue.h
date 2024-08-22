@@ -20,7 +20,7 @@ namespace TSUtil
     /// </summary>
     struct TimerQueueOption
     {
-        using fnHookExecute_t = std::function<void()>;
+        using fnHookExecute_t = std::function<void(std::function<void()>&&)>;
 
         /// <summary>
         /// 타이머 체크 간격
@@ -104,6 +104,7 @@ namespace TSUtil
 
         std::unique_ptr<ThreadWaitState> waitState_;
         std::unique_ptr<std::thread> thread_;
+        std::thread::id threadId_;
 
         quePendingRequest_t quePendingRequest_;
         setTimer_t setTimer_;
@@ -120,12 +121,26 @@ namespace TSUtil
     {
         const timerKey_t newTimerKey = _genTimerKey();
 
+        auto wrappedTask =
+            [timerThreadId = threadId_, fnTask = std::forward<fnTask_t>(fnTask)]()
+            {
+                // 태스크가 타이머 스레드 내에서 실행되면 안된다.
+                if (timerThreadId == std::this_thread::get_id())
+                    throw std::runtime_error("TimerQueue task must be called from another thread.");
+
+                fnTask();
+            };
+
         {
             context_t context;
             context.type_ = REQUEST_TYPE::ADD;
             context.key_ = newTimerKey;
-            context.fnTask_ = std::forward<fnTask_t>(fnTask);
             context.deadline_ = (_getNowTime() + duration);
+            context.fnTask_ =
+                [fnHookExecute = timerOption_.fnHookExecute_, wrappedTask = std::move(wrappedTask)]()
+                {
+                    fnHookExecute(std::move(wrappedTask));
+                };
 
             quePendingRequest_.emplace(std::move(context));
         }

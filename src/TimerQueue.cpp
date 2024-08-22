@@ -19,6 +19,8 @@ namespace TSUtil
                 _run();
             }
         );
+
+        threadId_ = thread_->get_id();
     }
 
     void TimerQueue::stop()
