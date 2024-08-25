@@ -1,20 +1,11 @@
 #pragma once
 
-#include "TSUtil/coroutine/CoroutineService.h"
-
-#include "TSUtil/coroutine/awaiter/SuspendThen.h"
-#include "TSUtil/coroutine/awaiter/SuspendThenStorage.h"
-
-#include "TSUtil/coroutine/object/TaskCoroutine.h"
-
 #include "TSUtil/constraint/chrono.h"
 #include "TSUtil/constraint/function.h"
 
-namespace TSUtil::coro::detail
-{
-    struct do_delay;
-    struct do_launch;
-}
+#include "TSUtil/coroutine/CoroutineService.h"
+#include "TSUtil/coroutine/object/TaskCoroutine.h"
+#include "TSUtil/coroutine/scope/impl/CapturedLaunchScope.h"
 
 namespace TSUtil::coro
 {
@@ -25,8 +16,6 @@ namespace TSUtil::coro
     class InnerCoroutineScope final
     {
         friend class CoroutineScope;
-        friend struct detail::do_delay;
-        friend struct detail::do_launch;
 
     protected:
         explicit InnerCoroutineScope(TaskDispatcher* dispatcher)
@@ -35,47 +24,78 @@ namespace TSUtil::coro
 
     public:
         /// <summary>
-        /// 일반 함수 실행(라운드 로빈 스레드)
+        /// 캡쳐할 인자를 tuple 로 전달받고, 실행한다.
+        /// 
+        /// 자세한 내용은 CoroutineScope::capture 를 참조
         /// </summary>
-        template <typename TCallable>
-            requires constraint_is_coroutine_function_flag<false, TCallable>
-        [[nodiscard]] auto launch(TCallable&& callable) const;
+        template <typename ...TArgs>
+        [[nodiscard]] auto capture(TArgs&&... args) const
+        {
+            return detail::CapturedLaunchAwaitScope(
+                dispatcher_,
+                InnerCoroutineScope{ dispatcher_ }, std::forward<TArgs>(args)...
+            );
+        }
 
         /// <summary>
-        /// 일반 함수 실행(지정 스레드)
+        /// 코루틴을 시작한다.
+        /// 지정한 스레드로 실행한다.
         /// </summary>
         template <typename TCallable>
-            requires constraint_is_coroutine_function_flag<false, TCallable>
-        [[nodiscard]] auto launch(size_t tid, TCallable&& callable) const;
+        [[nodiscard]] auto launch(size_t tid, TCallable&& callable) const
+        {
+            if constexpr (constraint_is_coroutine_function<TCallable, InnerCoroutineScope> == true)
+            {
+                // 코루틴 함수인 경우 InnerCoroutineScope 를 추가로 전달하고,
+                // awaiter 를 반환한다.
+                return detail::do_launch_await{}(
+                    tid,
+                    dispatcher_,
+                    std::forward<TCallable>(callable),
+                    std::tuple{ InnerCoroutineScope{ dispatcher_ } }
+                );
+            }
+            else
+            {
+                // 일반 함수인 경우 인자 전달은 없으며,
+                // void 또는 함수 내에서의 리턴에 따라 반환한다.
+                return detail::do_launch_await{}(
+                    tid,
+                    dispatcher_,
+                    std::forward<TCallable>(callable),
+                    {}
+                );
+            }
+        }
 
         /// <summary>
-        /// 코루틴 함수 실행(라운드 로빈 스레드)
+        /// 코루틴을 시작한다.
+        /// 라운드 로빈으로 실행한다.
         /// </summary>
         template <typename TCallable>
-            requires constraint_is_coroutine_function_flag<true, TCallable, InnerCoroutineScope>
-        [[nodiscard]] auto launch(TCallable&& callable) const;
-
-        /// <summary>
-        /// 코루틴 함수 실행(지정 스레드)
-        /// </summary>
-        template <typename TCallable>
-            requires constraint_is_coroutine_function_flag<true, TCallable, InnerCoroutineScope>
-        [[nodiscard]] auto launch(size_t tid, TCallable&& callable) const;
+        [[nodiscard]] auto launch(TCallable&& callable) const
+        {
+            return launch(dispatcher_->genThreadId(), std::forward<TCallable>(callable));
+        }
 
         /// <summary>
         /// 지정된 시간만큼 타이머 큐에서 대기 후 재개
         /// </summary>
         template <constraint_duration TDuration>
-        [[nodiscard]] auto delay(const TDuration& duration) const;
+        [[nodiscard]] auto delay(const TDuration& duration) const
+        {
+            return detail::do_delay{}(dispatcher_, duration);
+        }
 
         /// <summary>
         /// 지정된 시간만큼 타이머 큐에서 대기 후 재개
         /// </summary>
-        [[nodiscard]] auto delay(time_t delayMiliiSec) const;
+        [[nodiscard]] auto delay(time_t delayMiliiSec) const
+        {
+            return detail::do_delay{}(dispatcher_, std::chrono::milliseconds{ delayMiliiSec });
+        }
 
     protected:
         TaskDispatcher* dispatcher_ = nullptr;
     };
 }
-
-#include "InnerCoroutineScope.hpp"

@@ -40,19 +40,32 @@ namespace TSUtil
         ;
 
     /// <summary>
+    /// 반환을 하는 함수인지 체크
+    /// void 반환 여부로 확인한다.
+    /// </summary>
+    template <
+        bool TFlag,
+        typename TCallable,
+        typename ...TArgs
+    >
+    concept constraint_has_return_flag =
+        (constraint_not_match_return_type<TCallable, void, TArgs...> == TFlag)
+        ;
+
+    /// <summary>
     /// 반환을 하는 함수인지
     /// </summary>
     template <typename TCallable, typename ...TArgs>
-    concept constriant_has_return =
-        (constraint_not_match_return_type<TCallable, void, TArgs...> == true)
+    concept constraint_has_return =
+        (constraint_has_return_flag<true, TCallable, TArgs...> == true)
         ;
 
     /// <summary>
     /// 반환하지 않는 함수인지
     /// </summary>
     template <typename TCallable, typename ...TArgs>
-    concept constriant_has_not_return =
-        (constraint_match_return_type<TCallable, void, TArgs...> == true)
+    concept constraint_has_not_return =
+        (constraint_has_return_flag<false, TCallable, TArgs...> == true)
         ;
 
     /// <summary>
