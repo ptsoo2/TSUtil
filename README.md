@@ -26,8 +26,6 @@
     |   |   Config.h
     |   |   Constraint.h
     |   |   coroutine.h
-    |   |   CoroutineDispatcher.h
-    |   |   CoroutineDispatcher.hpp
     |   |   CoroutineService.h
     |   |   Types.h
     |   |
@@ -38,6 +36,11 @@
     |   |       SuspendThen.h
     |   |       SuspendThenStorage.h
     |   |
+    |   +---impl
+    |   |       Delay.h
+    |   |       impl.h
+    |   |       Launch.h
+    |   |
     |   +---object
     |   |       object.h
     |   |       SampleCoroutine.h
@@ -45,11 +48,14 @@
     |   |       TaskCoroutine.hpp
     |   |
     |   \---scope
-    |           CoroutineScope.h
-    |           CoroutineScope.hpp
-    |           InnerCoroutineScope.h
-    |           InnerCoroutineScope.hpp
-    |           scope.h
+    |       |   CoroutineScope.h
+    |       |   InnerCoroutineScope.h
+    |       |   LambdaCoroutineScope.h
+    |       |   scope.h
+    |       |
+    |       \---impl
+    |               CapturedLaunchScope.h
+    |               impl.h
     |
     \---synchronize
             SpinLock.h
