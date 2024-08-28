@@ -27,12 +27,7 @@ namespace TSUtil::coro::detail
                     auto fnHookExecute = [dispatchPointBackup](TimerQueue::fnTask_t&& fnTask)
                         {
                             // 그대로 resume 한다면 타이머 스레드에서 실행되므로 원래 스레드로 돌아와서 재개 시켜준다.
-                            dispatchPointBackup.dispatcher_->dispatch(dispatchPointBackup.threadIdx_,
-                               [fnTask = std::move(fnTask)]()
-                               {
-                                   fnTask();
-                               }
-                            );
+                            dispatchPointBackup.dispatcher_->dispatch(dispatchPointBackup.threadIdx_, std::move(fnTask));
                         };
 
                     // ptsoo todo

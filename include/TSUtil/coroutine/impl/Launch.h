@@ -15,7 +15,7 @@ namespace TSUtil::coro::detail
     public:
         template <typename TCallable, typename ...TArgs>
             requires constraint_is_coroutine_function<TCallable, TArgs...>
-        [[nodiscard]] void operator()(size_t tid, TaskDispatcher* dispatcher, TCallable&& callable, std::tuple<TArgs...>&& args) const&&
+        void operator()(size_t tid, TaskDispatcher* dispatcher, TCallable&& callable, std::tuple<TArgs...>&& args) const&&
         {
             // 디스패처 내에서 즉시 실행한다.
             dispatcher->dispatch(tid,
